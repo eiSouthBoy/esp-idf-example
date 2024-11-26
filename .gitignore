@@ -1,0 +1,6 @@
+.vscode
+build
+managed_components
+logs
+*.log
+dependencies.lock
