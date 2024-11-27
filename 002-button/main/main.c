@@ -6,9 +6,6 @@
 
 #include "iot_button.h"
 
-// #define BUTTON_GPIO_0 0        // Button GPIO
-// #define LED_GPIO_4 4           // LED  GPIO
-#define BUTTON_ACTIVE_LEVEL 0  // 低电平有效
 
 #define BUTTON_GPIO_0 CONFIG_BUTTON_GPIO_NUM
 #define LED_GPIO_4 CONFIG_LED_GPIO_NUM
@@ -32,45 +29,53 @@ const char *button_event_table[] = {
     "BUTTON_PRESS_END"          // 表示button此次检测已结束
 };
 
-/* 按键事件回调函数 */
-static void button_event_cb(void *arg, void *data)
+/* 按键事件（BUTTON_PRESS_DOWN）回调函数 */
+static void button_press_down_event_cb(void *arg, void *data)
 {
-    char btn_event[64] = {0};
-    snprintf(btn_event, 64, "%s", button_event_table[(button_event_t)data]);
-    ESP_LOGI(TAG, "Button event %s", btn_event);
     iot_button_print_event((button_handle_t)arg);
    
-    if (0 == strcmp(btn_event, "BUTTON_PRESS_DOWN"))
-    {
-        g_led_state = !g_led_state;
-        ESP_LOGI(TAG, "Turning the LED %s!", g_led_state == true ? "ON" : "OFF");
+    g_led_state = !g_led_state;
+    ESP_LOGI(TAG, "Turning the LED %s!", g_led_state == true ? "ON" : "OFF");
 
-        /* Set the GPIO level according to the state (LOW or HIGH)*/
-        gpio_set_level(LED_GPIO_4, g_led_state);
-    }
+    /* Set the GPIO level according to the state (LOW or HIGH)*/
+    gpio_set_level(LED_GPIO_4, g_led_state);
+}
+
+/* 按键事件（BUTTON_LONG_PRESS_START）回调函数 */
+static void button_long_press_start_event_cb(void *arg, void *data)
+{
+    iot_button_print_event((button_handle_t)arg);
+   
+    g_led_state = !g_led_state;
+    // do something
+
 }
 
 /* 按键初始化操作 */
 static void app_driver_button_init(uint32_t button_num)
 {
+    // create gpio button
     esp_err_t err;
     button_config_t btn_cfg = {
         .type = BUTTON_TYPE_GPIO,
+        .long_press_time = 5000,
         .gpio_button_config = {
             .gpio_num = button_num,
-            .active_level = BUTTON_ACTIVE_LEVEL,
+            .active_level = 0,
         },
     };
     button_handle_t btn = iot_button_create(&btn_cfg);
     assert(btn);
     /* 根据不同的按键事件注册回调 */
-    err = iot_button_register_cb(btn, BUTTON_PRESS_DOWN, button_event_cb, NULL);
+    err = iot_button_register_cb(btn, BUTTON_PRESS_DOWN, button_press_down_event_cb, NULL);
+    err |= iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, button_long_press_start_event_cb, NULL);
+
+    /* 自定义其他按键事件的回调实现 */
     // err |= iot_button_register_cb(btn, BUTTON_PRESS_UP, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_PRESS_REPEAT, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_PRESS_REPEAT_DONE, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_SINGLE_CLICK, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_DOUBLE_CLICK, button_event_cb, NULL);
-    // err |= iot_button_register_cb(btn, BUTTON_LONG_PRESS_START, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_LONG_PRESS_HOLD, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_LONG_PRESS_UP, button_event_cb, NULL);
     // err |= iot_button_register_cb(btn, BUTTON_PRESS_END, button_event_cb, NULL);
