@@ -4,3 +4,5 @@ managed_components
 logs
 *.log
 dependencies.lock
+sdkconfig
+sdkconfig.*
