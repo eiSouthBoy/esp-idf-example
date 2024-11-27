@@ -11,7 +11,7 @@ LED： 3W的LED模块，HW-269，共有三个针脚，分别是 +（接开发板
 
 `idf.py set-target esp32` ：选择目标SoC
 
-`idf.py menuconfig` ：配置菜单 "Example Button" 中设置LED和BUTTON的GPIO，默认LED的GPIO是0，BUTTON的GPIO是4。ESP32-DevKitC上Boot 案件对应的GPIO就是GPIO 0
+`idf.py menuconfig` ：配置菜单 "Example Button" 中设置LED和BUTTON的GPIO，默认LED的GPIO是0，BUTTON的GPIO是4。ESP32-DevKitC上 Boot 按键对应的GPIO就是GPIO 0
 
 `idf.py build` ：编译代码
 

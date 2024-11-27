@@ -86,9 +86,9 @@ static void app_driver_button_init(uint32_t button_num)
 static void app_driver_led_init(void)
 {
     ESP_LOGI(TAG, "Example configured to GPIO LED(GPIO %d)!", LED_GPIO_4);
-    gpio_reset_pin(LED_GPIO_4);
-    gpio_set_direction(LED_GPIO_4, GPIO_MODE_OUTPUT); /* Set the GPIO as a push/pull output */
-    gpio_set_level(LED_GPIO_4, 0);
+    gpio_reset_pin(LED_GPIO_4); // 重启GPIO_4的电平状态
+    gpio_set_direction(LED_GPIO_4, GPIO_MODE_OUTPUT); // 选择输出模式
+    gpio_set_level(LED_GPIO_4, 0);  // 设置 GPIO_4 为低电平（ESP32启动时，LED为关闭状态）
 }
 
 void app_main(void)
