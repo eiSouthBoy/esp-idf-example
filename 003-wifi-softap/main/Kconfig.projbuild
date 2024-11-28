@@ -1,0 +1,77 @@
+menu "Example AP Configuration"
+
+    config ESP_WIFI_SSID
+        string "WiFi SSID"
+        default "ESP32"
+        help
+            SSID (network name) for the example to connect to.
+
+    config ESP_WIFI_PASSWORD
+        string "WiFI Password"
+        default "12345678"
+        help
+            WiFi Password (WPA or WPA2) for the example to use.
+    
+    config ESP_WIFI_CHANNEL
+        int "WiFi Channel"
+        range 1 13
+        default 1
+        help
+            WiFi Channel (network channel) for the example to use.
+
+    config ESP_MAX_STA_CONN
+        int "Maximum STA connections"
+        default 4
+        help
+            Maximum number of the STA connection to AP. 
+
+    choice
+        prompt "Select the security mode that will be used by the AP."
+        default ESP_WIFI_AUTH_MODE_WPA_WPA2_PSK
+        
+        config ESP_WIFI_AUTH_MODE_OPEN
+            bool "authenticate mode : open"
+            select SECURITY_MODE
+        config ESP_WIFI_AUTH_MODE_WEP
+            bool "authenticate mode : WEP"
+            select SECURITY_MODE
+        config ESP_WIFI_AUTH_MODE_WPA_PSK
+            bool "authenticate mode : WPA_PSK"
+            select SECURITY_MODE
+        config ESP_WIFI_AUTH_MODE_WPA2_PSK
+            bool "authenticate mode : WPA2_PSK"
+            select SECURITY_MODE
+        config ESP_WIFI_AUTH_MODE_WPA_WPA2_PSK
+            bool "authenticate mode : WPA_WPA2_PSK"
+            select SECURITY_MODE
+        config ESP_WIFI_AUTH_MODE_WPA3_PSK
+            bool "authenticate mode : WPA3_PSK"
+            select SECURITY_MODE
+        config ESP_WIFI_AUTH_MODE_WPA2_WPA3_PSK
+            bool "authenticate mode : WPA2_WPA3_PSK"
+            select SECURITY_MODE
+    endchoice
+
+    # 定义一个整数变量来存储选择的结果
+    config SECURITY_MODE
+        int
+        default 0 if ESP_WIFI_AUTH_MODE_OPEN
+        default 1 if ESP_WIFI_AUTH_MODE_WEP
+        default 2 if ESP_WIFI_AUTH_MODE_WPA_PSK
+        default 3 if ESP_WIFI_AUTH_MODE_WPA2_PSK
+        default 4 if ESP_WIFI_AUTH_MODE_WPA_WPA2_PSK
+        default 6 if ESP_WIFI_AUTH_MODE_WPA3_PSK
+        default 7 if ESP_WIFI_AUTH_MODE_WPA2_WPA3_PSK
+       
+        help
+        This variable stores the selected security mode as an integer:
+        0 - OPEN
+        1 - WEP
+        2 - WPA-PSK
+        3 - WPA2-PSK
+        4 - WPA-WPA2-PSK
+        6 - WPA3-PSK
+        7 - WPA2-WPA3-PSK
+
+
+endmenu
