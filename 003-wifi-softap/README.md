@@ -5,8 +5,6 @@
 
 开发板：[ESP32-DevKitC](https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32/esp32-devkitc/user_guide.html)，板载模组是 ESP32-WROOM-32E
 
-LED： 3W的LED模块，HW-269，共有三个针脚，分别是 +（接开发板5V）、G（接开发板的GND）、S（接开发板的GPIO） 
-
 
 ## 步骤
 
