@@ -64,14 +64,14 @@ menu "Example AP Configuration"
         default 7 if ESP_WIFI_AUTH_MODE_WPA2_WPA3_PSK
        
         help
-        This variable stores the selected security mode as an integer:
-        0 - OPEN
-        1 - WEP
-        2 - WPA-PSK
-        3 - WPA2-PSK
-        4 - WPA-WPA2-PSK
-        6 - WPA3-PSK
-        7 - WPA2-WPA3-PSK
+            This variable stores the selected security mode as an integer:
+            0 - OPEN
+            1 - WEP
+            2 - WPA-PSK
+            3 - WPA2-PSK
+            4 - WPA-WPA2-PSK
+            6 - WPA3-PSK
+            7 - WPA2-WPA3-PSK
 
 
 endmenu

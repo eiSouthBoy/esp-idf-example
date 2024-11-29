@@ -26,6 +26,7 @@
 #define EXAMPLE_MAX_STA_CONN CONFIG_ESP_MAX_STA_CONN // 设置Sta的最大连接数
 #define EXAMPLE_ESP_WIFI_AUTH CONFIG_SECURITY_MODE   // 设置AP的加密方式
 
+
 static const char *TAG = "wifi softAP";
 
 // WiFi 事件回调函数
@@ -80,11 +81,7 @@ void wifi_init_softap(void)
            .channel = EXAMPLE_ESP_WIFI_CHANNEL,
            .password = EXAMPLE_ESP_WIFI_PASS,
            .max_connection = EXAMPLE_MAX_STA_CONN,
-#ifdef CONFIG_SECURITY_MODE
-      .authmode = CONFIG_SECURITY_MODE,
-#else
-      .authmode = WIFI_AUTH_WPA_WPA2_PSK,
-#endif
+           .authmode = EXAMPLE_ESP_WIFI_AUTH,
            .pmf_cfg = {
                .required = true,
            },
