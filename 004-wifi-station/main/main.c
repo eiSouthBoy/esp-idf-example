@@ -120,9 +120,15 @@ static void wifi_init_sta(void)
    // 使用默认WiFi STA配置创建 esp_netif 对象，将netif连接到WiFi，并注册默认WiFi处理程序
    esp_netif_create_default_wifi_sta();
 
-   // // 创建默认WiFi配置，接着执行WiFi驱动初始化
+   // 创建默认WiFi配置，接着执行WiFi驱动初始化
    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+   // 获取MAC地址
+   uint8_t mac_addr[6];
+   ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac_addr));
+   ESP_LOGI(TAG, "MAC Address: %02x:%02x:%02x:%02x:%02x:%02x",
+      mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
    esp_event_handler_instance_t instance_any_id;
    esp_event_handler_instance_t instance_got_ip;
