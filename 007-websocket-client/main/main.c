@@ -150,6 +150,7 @@ static void websocket_app_start(void)
                                           pdFALSE, 
                                           NULL, 
                                           shutdown_signaler);
+    // 创建信号量
     shutdown_sema = xSemaphoreCreateBinary();
 
     esp_websocket_client_config_t websocket_cfg = {
@@ -213,7 +214,7 @@ static void websocket_app_start(void)
     // 启动定时器
     xTimerStart(shutdown_signal_timer, portMAX_DELAY);
 
-    /* 发送文本数据 */ 
+    /* 发送5次文本数据 */ 
     char data[32];
     int i = 0;
     while (i < 5) 
@@ -260,7 +261,7 @@ static void websocket_app_start(void)
     esp_websocket_client_send_text(client, long_data, size, portMAX_DELAY);
     free(long_data);
 
-
+    // 等待信号量
     xSemaphoreTake(shutdown_sema, portMAX_DELAY);
     // 以干净的方式关闭 websocket 连接
     esp_websocket_client_close(client, portMAX_DELAY);
