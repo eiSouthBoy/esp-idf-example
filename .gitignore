@@ -5,4 +5,4 @@ logs
 *.log
 dependencies.lock
 sdkconfig
-sdkconfig.*
+sdkconfig.old
