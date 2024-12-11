@@ -7,6 +7,7 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 #include <string.h>
+#include <inttypes.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -20,11 +21,15 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "iot_button.h"
 #include "esp_common.h"
 
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID // WiFI的SSID
 #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD // WiFi的密码
 #define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY // 重连最大次数
+#define EXAMPLE_WIFI_RSSI_THRESHOLD CONFIG_EXAMPLE_WIFI_RSSI_THRESHOLD // RSSI
+
+#define EXAMPLE_BUTTON_GPIO CONFIG_BUTTON_GPIO_NUM
 
 /* 加密模式 */
 #if CONFIG_ESP_WIFI_AUTH_OPEN
@@ -70,8 +75,20 @@ static const char *TAG = "wifi station";
 static EventGroupHandle_t g_wifi_event_group;
 
 static int g_retry_num = 0;
+static uint8_t g_wifi_connected = 0;
 
+#if EXAMPLE_WIFI_RSSI_THRESHOLD
+static void event_handler_rssi_low(void* arg, 
+                                   esp_event_base_t event_base,
+		                             int32_t event_id, 
+                                   void* event_data)
+{
+	wifi_event_bss_rssi_low_t *event = event_data;
 
+	ESP_LOGI("WIFI_EVENT_STA_BSS_RSSI_LOW", "bss rssi: %" PRIi32 "", event->rssi);
+   // esp_wifi_set_rssi_threshold(EXAMPLE_WIFI_RSSI_THRESHOLD);
+}
+#endif
 
 static void event_handler(void *arg, 
                           esp_event_base_t event_base, 
@@ -87,6 +104,7 @@ static void event_handler(void *arg,
    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
    {
       // WiFi 连接失败，尝试重连
+      g_wifi_connected = 0;
       ESP_LOGI("WIFI_EVENT_STA_DISCONNECTED", "connect to the AP fail");
       if (g_retry_num < EXAMPLE_ESP_MAXIMUM_RETRY)
       {
@@ -99,12 +117,23 @@ static void event_handler(void *arg,
          xEventGroupSetBits(g_wifi_event_group, WIFI_FAIL_BIT);
       }
    }
+   else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED)
+   {
+#if EXAMPLE_WIFI_RSSI_THRESHOLD
+		if (EXAMPLE_WIFI_RSSI_THRESHOLD) 
+      {
+			ESP_LOGI("WIFI_EVENT_STA_CONNECTED", "setting rssi threshold as %d", EXAMPLE_WIFI_RSSI_THRESHOLD);
+			esp_wifi_set_rssi_threshold(EXAMPLE_WIFI_RSSI_THRESHOLD);
+		}
+#endif      
+   }
    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
    {
       ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
       ESP_LOGI("IP_EVENT_STA_GOT_IP", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
       g_retry_num = 0;
       xEventGroupSetBits(g_wifi_event_group, WIFI_CONNECTED_BIT);
+      g_wifi_connected = 1;
    }
 }
 
@@ -145,6 +174,14 @@ static void wifi_init_sta(void)
                                                         &event_handler,
                                                         NULL,
                                                         &instance_got_ip));
+   #if EXAMPLE_WIFI_RSSI_THRESHOLD
+   ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, 
+                                                       WIFI_EVENT_STA_BSS_RSSI_LOW,
+				                                           &event_handler_rssi_low, 
+                                                       NULL,
+                                                       NULL));
+   #endif
+
    // 通过Kconfig 配置，自定义 WIFI 的配置项
    wifi_config_t wifi_config = {
       .sta = {
@@ -187,6 +224,44 @@ static void wifi_init_sta(void)
    }
 }
 
+/* 按键事件（BUTTON_PRESS_DOWN）回调函数 */
+static void button_press_down_event_cb(void *arg, void *data)
+{
+   iot_button_print_event((button_handle_t)arg);
+   ESP_LOGI(TAG, "Button Presss Down");
+   if (!g_wifi_connected)
+   {
+      ESP_LOGI(TAG, "wifi sta don't connect target ap");
+      return;
+   }
+   
+   // 获取已连接AP信息
+   wifi_ap_record_t ap_info = {0};
+   esp_wifi_sta_get_ap_info(&ap_info);
+   ESP_LOGI(TAG, "get ap info, ssid: %s, rssi: %d", ap_info.ssid, ap_info.rssi);
+}
+
+/* 按键初始化操作 */
+static void app_driver_button_init(void)
+{
+   // create gpio button
+   esp_err_t err;
+   button_config_t btn_cfg = {
+       .type = BUTTON_TYPE_GPIO,
+       .long_press_time = 5000,
+       .gpio_button_config = {
+           .gpio_num = EXAMPLE_BUTTON_GPIO,
+           .active_level = 0,
+       },
+   };
+   button_handle_t btn = iot_button_create(&btn_cfg);
+   assert(btn);
+   /* 根据不同的按键事件注册回调 */
+   err = iot_button_register_cb(btn, BUTTON_PRESS_DOWN, button_press_down_event_cb, NULL);
+
+   ESP_ERROR_CHECK(err);
+}
+
 void app_main(void)
 {
    // NVS 初始化
@@ -199,6 +274,9 @@ void app_main(void)
       ret = nvs_flash_init();
    }
    ESP_ERROR_CHECK(ret);
+
+   // Button 初始化
+   app_driver_button_init();
 
    char automode[34] = {0};
    esp_wifi_authmode_get(EXAMPLE_ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD, automode);
