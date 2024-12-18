@@ -1,0 +1,18 @@
+menu "Example Configuration"
+
+    config LED_GPIO_NUM
+        int "gpio pin"
+        prompt "set led gpio"
+        range 0 19
+        default 4
+        help
+            This is help message
+    config BUTTON_GPIO_NUM
+        int "gpio pin"
+        prompt "set button gpio"
+        range 0 19
+        default 0
+        help
+            This is help message
+
+endmenu
