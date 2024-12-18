@@ -1,0 +1,5 @@
+dependencies:
+  cmd_system:
+    path: ../../components/cmd_system
+  iperf:
+    path: ../../components/iperf
