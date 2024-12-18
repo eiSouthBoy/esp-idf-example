@@ -1,0 +1,48 @@
+menu "Example Configuration"
+
+    choice EXAMPLE_WPS_TYPE
+        prompt "WPS mode"
+        default EXAMPLE_WPS_TYPE_PBC
+        help
+            WPS type for the esp32 to use.
+
+        config EXAMPLE_WPS_TYPE_PBC
+            bool "PBC"
+        config EXAMPLE_WPS_TYPE_PIN
+            bool "PIN"
+        config EXAMPLE_WPS_TYPE_DISABLE
+            bool "disable"
+    endchoice
+
+    # SoftAP 的相关配置
+    menu "SoftAP Configuration"
+        comment "SoftAP Configuration"
+
+        config ESP_WIFI_AP_SSID
+            string "WiFi AP SSID"
+            default "ESP32"
+            help
+                SSID (network name) of the AP for the example to connect to.
+
+        config ESP_WIFI_AP_PASSWORD
+            string "WiFi AP Password"
+            default "12345678"
+            help
+                WiFi password of the AP for the example to use.
+
+        config ESP_WIFI_AP_CHANNEL
+            int "WiFi AP Channel"
+            range 1 14
+            default 1
+            help
+                WiFi channel (network channel) of the AP for the example to use.
+
+        config ESP_MAX_STA_CONN_AP
+            int "Maximal STA connections"
+            default 4
+            help
+                Max number of the STA connects to AP.        
+
+    endmenu
+
+endmenu
