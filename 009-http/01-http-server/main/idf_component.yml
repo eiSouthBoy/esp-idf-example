@@ -1,0 +1,3 @@
+dependencies:
+  protocol_examples_common:
+    path: ../../components/protocol_examples_common
