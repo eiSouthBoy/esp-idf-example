@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Page</title>
+    <style>
+        #messageDisplay {
+            width: 100%;
+            height: 200px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Web Client.</h1>
+    <p style="display: inline;"><label for="textID">发送数据:</label></p>
+    <input type="text" id="textID" value="" onkeydown="handleKeyPress(event)">
+
+    <p style="margin-top: 20px;"><label for="messageDisplay">接收数据:</label></p>
+    <textarea id="messageDisplay" readonly></textarea>
+</body>
+</html>
+
+<script>
+    //服务器地址    
+    //烧录进ESP32时使用 "ws://"+window.location.host+"/ws" 
+    //调试html时直接写 "ws://192.168.31.117/ws"
+    const ws_client = new WebSocket("ws://" + "192.168.5.175" + "/ws");
+
+    /*ws_client连接成功事件*/
+    ws_client.onopen = function (event) 
+    {
+        console.log('WebSocket connection established.');
+    };
+
+    /*ws_client错误事件*/
+    ws_client.onerror = function (error) 
+    {
+        console.error('WebSocket error:', error);
+    };
+
+    /*ws_client接收数据*/
+    ws_client.onmessage = function (event) 
+    {
+        data_processing(event.data);  //获取数据交给别的函数处理
+    };
+
+    /*数据处理*/
+    function data_processing(data) 
+    {
+        console.log(data);  //打印在调试框
+        document.getElementById("messageDisplay").value = data; //显示在ID为"textID"的条框中
+        // ws_client.send(data);   //发给服务器
+    }
+
+    // 处理按键事件
+    function handleKeyPress(event) 
+    {
+        if (event.key === "Enter") 
+        { // 检查是否按下了回车键
+            let input = document.getElementById("textID");
+            let message = input.value;
+            if (message.trim() !== "") // 确保消息不是空白
+            { 
+                ws_client.send(message); // 发送消息到服务器
+                console.log('Message sent:', message);
+                input.value = ''; // 清空输入框
+            }
+            event.preventDefault(); // 阻止默认的换行行为
+        }
+    }
+
+    // 监听页面卸载事件，确保WebSocket连接被关闭
+    window.addEventListener('beforeunload', function (event) {
+        if (ws_client.readyState === WebSocket.OPEN) {
+            ws_client.close(); // 尝试优雅地关闭WebSocket连接
+            console.log('WebSocket connection closed on page unload.');
+        }
+    });
+</script>
