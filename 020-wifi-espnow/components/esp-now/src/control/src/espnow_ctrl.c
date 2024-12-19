@@ -493,7 +493,7 @@ esp_err_t espnow_ctrl_initiator_send(espnow_attribute_t initiator_attribute,
         .responder_attribute = responder_attribute,
         .responder_value_i   = responder_value,
     };
-
+    ESP_LOGD(TAG, "--> sizeof(espnow_ctrl_data_t): %d", sizeof(espnow_ctrl_data_t));
     ret = espnow_send(ESPNOW_DATA_TYPE_CONTROL_DATA, ESPNOW_ADDR_BROADCAST, &data, 
                       sizeof(espnow_ctrl_data_t), &g_initiator_frame, pdMS_TO_TICKS(1000));
     ESP_ERROR_RETURN(ret != ESP_OK, ret,  "espnow_broadcast, ret: %d", ret);

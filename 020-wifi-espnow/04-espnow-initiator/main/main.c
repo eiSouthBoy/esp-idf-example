@@ -295,6 +295,8 @@ static void app_responder_ctrl_data_cb(espnow_attribute_t initiator_attribute,
 
 static void app_responder_init(void)
 {
+    // responder创建一个Task用来处理接收 bind 帧，包括绑定和解绑
+    // 等待绑定数据帧的超时时间为 30s, 接收绑定数据帧的RSSI需要大于 -55dBm
     ESP_ERROR_CHECK(espnow_ctrl_responder_bind(30 * 1000, -55, NULL));
 
     // 注册回调函数，对于接收ESPNOW数据的处理

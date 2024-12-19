@@ -529,6 +529,14 @@ esp_err_t espnow_send(espnow_data_type_t type, const espnow_addr_t dest_addr, co
     ESP_PARAM_CHECK(size <= ESPNOW_DATA_LEN);
     ESP_ERROR_RETURN(!g_espnow_config, ESP_ERR_ESPNOW_NOT_INIT, "ESPNOW is not initialized");
 
+    uint8_t *p_data = (uint8_t *)data;
+    printf("--> espnow_send() data:");
+    for (int i = 0; i < size; i++)
+    {
+        printf("%02x ", p_data[i]);
+    }
+    printf("\n");
+
     esp_err_t ret             = ESP_FAIL;
     TickType_t write_ticks    = 0;
     uint32_t start_ticks      = xTaskGetTickCount();
@@ -1042,6 +1050,9 @@ esp_err_t espnow_init(const espnow_config_t *config)
 {
     ESP_LOGI(TAG, "esp-now Version: %d.%d.%d", ESP_NOW_VER_MAJOR, ESP_NOW_VER_MINOR, ESP_NOW_VER_PATCH);
     wifi_ap_record_t ap_info;
+
+    ESP_LOGD(TAG, "--> sizeof(espnow_frame_head_t): %d, sizeof(espnow_data_t): %d", 
+             sizeof(espnow_frame_head_t), sizeof(espnow_data_t));
 
     ESP_PARAM_CHECK(config);
 

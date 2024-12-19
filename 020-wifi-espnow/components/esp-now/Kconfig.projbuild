@@ -196,13 +196,13 @@ menu "ESP-NOW Configuration"
         int "Continuous reboot interval(ms)"
         default 5000
         help
-        Continuous reboot interval.
+            Continuous reboot interval.
 
     config ESPNOW_REBOOT_UNBROKEN_FALLBACK_COUNT
         int "Continuous restart triggers version rollback"
         default 30
         help
-        Continuous restart triggers version rollback.
+            Continuous restart triggers version rollback.
     endmenu
 
     menu "ESP-NOW Debug Configuration" 
