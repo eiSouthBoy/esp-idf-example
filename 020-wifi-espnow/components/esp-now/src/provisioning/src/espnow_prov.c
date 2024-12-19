@@ -95,6 +95,29 @@ static esp_err_t espnow_prov_recv(uint8_t *src_addr, void *data,
     esp_err_t ret = ESP_OK;
     uint8_t data_type = ((uint8_t *)data)[0];
     espnow_prov_data_t *recv_data = (espnow_prov_data_t *)data;
+    ESP_LOGI(TAG, "--> sizeof(espnow_prov_data_t): %d || sizeof(espnow_prov_initiator_t): %d, "
+             "sizeof(espnow_prov_responder_t): %d, sizeof(espnow_prov_wifi_t): %d, "
+             "sizeof(espnow_prov_auth_mode_t): %d, sizeof(wifi_mode_t): %d", 
+             sizeof(espnow_prov_data_t), sizeof(espnow_prov_initiator_t),
+             sizeof(espnow_prov_responder_t), sizeof(espnow_prov_wifi_t),
+             sizeof(espnow_prov_auth_mode_t), sizeof(wifi_mode_t));
+    if (data_type == ESPNOW_PROV_TYPE_BEACON)
+        ESP_LOGI(TAG, "--> recv data_type: ESPNOW_PROV_TYPE_BEACON");
+    else if (data_type == ESPNOW_PROV_TYPE_DEVICE)
+        ESP_LOGI(TAG, "--> recv data_type: ESPNOW_PROV_TYPE_DEVICE");
+    else if (data_type == ESPNOW_PROV_TYPE_WIFI)
+        ESP_LOGI(TAG, "--> recv data_type: ESPNOW_PROV_TYPE_WIFI");
+    
+    printf("--> MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", 
+           src_addr[0], src_addr[1], src_addr[2], src_addr[3], src_addr[4], src_addr[5]);
+    printf("--> recv data(%d): ", size);
+    uint8_t *p_data = (uint8_t *)data;
+    for (int i = 0; i < size; i++)
+    {
+        printf("%02x ", p_data[i]);
+    }
+    printf("\n");
+
 
     switch (data_type) {
         case ESPNOW_PROV_TYPE_BEACON:
