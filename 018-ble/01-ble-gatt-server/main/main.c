@@ -165,6 +165,7 @@ static const uint16_t GATTS_CHAR_UUID_TEST_A       = 0xFF01;
 static const uint16_t GATTS_CHAR_UUID_TEST_B       = 0xFF02;
 static const uint16_t GATTS_CHAR_UUID_TEST_C       = 0xFF03;
 static const uint16_t GATTS_CHAR_UUID_TEST_LED     = 0xFF04; // LED
+static const uint16_t GATTS_CHAR_UUID_TEST_TEMP     = 0xFF05; // LED
 
 
 static const uint16_t primary_service_uuid         = ESP_GATT_UUID_PRI_SERVICE;
@@ -174,9 +175,11 @@ static const uint8_t char_prop_read                =  ESP_GATT_CHAR_PROP_BIT_REA
 static const uint8_t char_prop_write               = ESP_GATT_CHAR_PROP_BIT_WRITE;
 static const uint8_t char_prop_read_write          =  ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE;
 static const uint8_t char_prop_read_write_notify   = ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
+static const uint8_t char_prop_read_notify         = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
 static const uint8_t heart_measurement_ccc[2]      = {0x00, 0x00};
 static const uint8_t char_value[4]                 = {0x11, 0x22, 0x33, 0x44};
 static const uint8_t led_value[1]                  = {0x00}; // LED
+static const uint8_t temp_value[1]                  = {0x00}; // LED
 
 
 /* Full Database Description - Used to add attributes into the database */
@@ -212,6 +215,24 @@ static const esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_TEST_LED, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
       GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(led_value), (uint8_t *)led_value}},
 
+    /* 增加属性表，配置特征值，描述温湿度传感器相关的信息 */
+    // 特征声明
+    [IDX_CHAR_TEMP]     =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
+      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_notify}},
+
+    // 特征值
+    [IDX_CHAR_VAL_TEMP] =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&GATTS_CHAR_UUID_TEST_TEMP, ESP_GATT_PERM_READ,
+      GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(temp_value), (uint8_t *)temp_value}},
+
+    // 客户端特征配置描述句柄
+    [IDX_CHAR_CFG_TEMP]  =
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
+      sizeof(uint16_t), sizeof(heart_measurement_ccc), (uint8_t *)heart_measurement_ccc}},
+
+
+
     /* Characteristic Declaration */
     [IDX_CHAR_B]      =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
@@ -233,6 +254,31 @@ static const esp_gatts_attr_db_t gatt_db[HRS_IDX_NB] =
       GATTS_DEMO_CHAR_VAL_LEN_MAX, sizeof(char_value), (uint8_t *)char_value}},
 
 };
+
+TaskHandle_t *pTask = NULL;
+volatile bool notify_flag = false;
+static void get_temp(void *arg)
+{
+    while (1)
+    {
+        if (notify_flag == true)
+        {
+            uint8_t temp = 20 + rand() % 11;
+            esp_ble_gatts_set_attr_value(heart_rate_handle_table[IDX_CHAR_VAL_TEMP], 1, &temp);
+            esp_ble_gatts_send_indicate(heart_rate_profile_tab[0].gatts_if, 
+                                        heart_rate_profile_tab[0].conn_id,
+                                        heart_rate_handle_table[IDX_CHAR_VAL_TEMP],
+                                        1,
+                                        &temp,
+                                        false);
+        }
+        else
+        {
+            vTaskDelete(NULL);
+        }
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+}
 
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
@@ -397,9 +443,11 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
             ESP_LOGI(GATTS_TABLE_TAG, "ESP_GATTS_READ_EVT");
        	    break;
         case ESP_GATTS_WRITE_EVT:
-            if (!param->write.is_prep){
+            if (!param->write.is_prep)
+            {
                 // the data length of gattc write  must be less than GATTS_DEMO_CHAR_VAL_LEN_MAX.
-                ESP_LOGI(GATTS_TABLE_TAG, "GATT_WRITE_EVT, handle = %d, value len = %d, value :", param->write.handle, param->write.len);
+                ESP_LOGI(GATTS_TABLE_TAG, "GATT_WRITE_EVT, handle = %d, value len = %d, value :", 
+                         param->write.handle, param->write.len);
                 esp_log_buffer_hex(GATTS_TABLE_TAG, param->write.value, param->write.len);
 
                 // LED 事件
@@ -415,6 +463,42 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
                         led_set_level(LED_ON);
                     }
                 }
+                // TEMP 事件
+                if (heart_rate_handle_table[IDX_CHAR_CFG_TEMP] == param->write.handle && param->write.len == 2)
+                {
+                    // 接收的十六进制数据是小端序，例如 01 00，要转成 00 01
+                    uint16_t descr_value = param->write.value[1] << 8 | param->write.value[0];
+                    ESP_LOGI(GATTS_TABLE_TAG, "descr_value: %" PRIu16 "", descr_value);
+                    if (descr_value == 0x0001)
+                    {
+                        ESP_LOGI(GATTS_TABLE_TAG, "notify enable");
+                        xTaskCreate(get_temp, "get temp", 8192, NULL ,10, pTask);
+                        notify_flag = true;
+                    }
+                    else if (descr_value == 0x0002)
+                    {
+                        ESP_LOGI(GATTS_TABLE_TAG, "indicate enable");
+                        uint8_t indicate_data[15] = {0};
+                        for (int i = 0; i < sizeof(indicate_data); i++)
+                        {
+                            indicate_data[i] = i % 0xff;
+                        }
+                        esp_ble_gatts_send_indicate(gatts_if, param->write.conn_id, 
+                                heart_rate_handle_table[IDX_CHAR_VAL_TEMP], sizeof(indicate_data), 
+                                indicate_data, true);
+                    }
+                    else if (descr_value == 0x0000)
+                    {
+                        ESP_LOGI(GATTS_TABLE_TAG, "notify/indicate disable");
+                        notify_flag = false;
+                    }
+                    else
+                    {
+                        ESP_LOGI(GATTS_TABLE_TAG, "unknown descr value");
+                        esp_log_buffer_hex(GATTS_TABLE_TAG, param->write.value, param->write.len);
+                    }
+                }
+
 
                 if (heart_rate_handle_table[IDX_CHAR_CFG_A] == param->write.handle && param->write.len == 2)
                 {
