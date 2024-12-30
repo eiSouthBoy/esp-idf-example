@@ -4,5 +4,10 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
+# 手动添加组件路径
+set(EXTRA_COMPONENT_DIRS 
+    "./components/protocol_examples_common"
+    "./components/trombik__esp_wireguard")
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(esp_wireguard)
