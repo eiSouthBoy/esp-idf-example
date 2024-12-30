@@ -205,4 +205,10 @@ void app_main(void)
     /* soft restart */
     button_init();
     xTaskCreate(&esp_button_reset_task, "button_reset_task", 2048, NULL, 5, NULL);
+
+    for (int i = 0; i < 100; i++)
+    {
+        ESP_LOGI(TAG, "hello world");
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }
