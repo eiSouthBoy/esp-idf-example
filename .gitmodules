@@ -1,0 +1,3 @@
+[submodule "030-esp32-coremark/components/coremark-esp32"]
+	path = 030-esp32-coremark/components/coremark-esp32
+	url = https://github.com/eiSouthBoy/coremark-esp32.git
