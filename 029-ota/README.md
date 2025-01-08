@@ -1,11 +1,13 @@
 # ota
 
+ota升级可以选择http 或 https 两种方式。
 
 ## http
 029-ota 项目应用烧录到 ESP32 后，创建一个OTA请求任务。
 
 001-hello-world 项目下的build目录存在 hello-world.bin 固件镜像，在该目录下运行以下命令： `python -m http.server 8070`
 
+`idf.py menuconfig` 菜单中的 url 需要修改，http --> https
 
 ```bash
 I (5893) simple_ota_example: Starting OTA example task
@@ -30,9 +32,63 @@ I (36013) simple_ota_example: OTA Succeed, Rebooting...
 
 ## https
 
-执行命令： `python3 pytest_simple_ota.py ./ 8070 ./` ，首先要执行下面的命令
+1、首先需要使用 openssl 为 https 服务器创建私钥和证书。
+
+在项目下创建一个文件夹来保存服务器公钥、证书，以及待升级的固件文件。
 
 ```bash
+mkdir -p https_server_test
+cd https_server_test
+# 生成公钥和证书。注意：命令执行后，需要用户逐步输入提示信息
+openssl req -x509 -newkey rsa:2048 -keyout ca_key.pem -out ca_cert.pem -days 365 -nodes
+```
+
+2、使用python3运行一个https服务
+
+首先要执行下面的命令，因为 `pytest_simple_ota.py` 需要依赖 `esp-idf` 工具库。
+
+```bash
+# 激活esp-idf
 get_idf
+
+# 设置 Python 工具库环境变量
 export PYTHONPATH="$PYTHONPATH:$IDF_PATH/tools/ci/python_packages"
 ```
+
+运行https服务，执行命令： 
+
+```bash
+cd https_server_test
+python3 pytest_simple_ota.py ./ 8070 ./
+```
+
+3、验证https证书和网络
+
+可以使用 curl 工具验证 https 证书是否可用。在 `https_server_test` 目录下创建一个html文件：index.html
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My First Web Page</title>
+</head>
+<body>
+
+<h1>Hello World!</h1>
+
+</body>
+</html>
+
+```
+
+使用 curl 发送 http request，执行命令：
+
+```bash
+cd https_server_test
+curl -v --cacert ca_cert.pem https://192.168.5.170:8070/index.html
+```
+
+*注意：192.168.5.170 是本地主机的IP地址*
+
+4、烧录固件到ESP32，通过串口观察日志。
+
