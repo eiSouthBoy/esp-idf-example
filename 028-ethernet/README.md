@@ -12,9 +12,14 @@ ESP32-DevKitC 和 LAN8720 接线：
 | GPIO27 | CRS_DV      | CRS   | EMAC_RX_DRV    |
 | 3V3    | /           | VCC   | /              |
 | GND    | /           | GND   | /              |
+| GPIO23 | MDC         | MDC   |Output to PHY   |
+| GPIO18 | MDIO        | MDIO  |Bidirectional   |
+
 
 
 `idf.py menuconfig` 菜单配置选项：
 
-Ethernet PHY Device --> LAN8700
-RMII clock mode --> Output RMII clock from internet
+Example Ethernet Configuration → Internal EMAC → Ethernet PHY Device
+    勾选LAN87xx
+Component config → Ethernet → Support ESP32 internal EMAC controller → RMII clock mode
+    勾选Output RMII clock from internal
