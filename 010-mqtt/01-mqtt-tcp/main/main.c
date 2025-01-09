@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include "driver/gpio.h"
 #include "esp_wifi.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
@@ -31,7 +34,8 @@
 #include "mqtt_client.h"
 
 static const char *TAG = "mqtt_example";
-
+static bool g_mqtt_connected = false;
+#define _SUSPEND_GPIO GPIO_NUM_4
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -61,6 +65,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     {
     case MQTT_EVENT_CONNECTED: // 连接
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+        g_mqtt_connected = true;
 
         /* 向Topic: /topic/qos1 发布一条消息。qos=0,retained=1 */
         // msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
@@ -79,6 +84,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
     case MQTT_EVENT_DISCONNECTED: // 断开
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        g_mqtt_connected = false;
         break;
 
     case MQTT_EVENT_SUBSCRIBED: // 订阅
@@ -123,6 +129,29 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
+void task_check_gpio_level(void *pvPram)
+{
+    int _suspend_level = 0;
+    int msg_id = 0;
+    esp_mqtt_client_handle_t client = (esp_mqtt_client_handle_t)pvPram;
+    gpio_set_level(_SUSPEND_GPIO, GPIO_MODE_INPUT);
+    while (1)
+    {
+        _suspend_level = gpio_get_level(_SUSPEND_GPIO);
+        ESP_LOGI(TAG, "gpio%d level: %d", _SUSPEND_GPIO, _suspend_level);
+        if (g_mqtt_connected)
+        {
+            char payload[64] = {0};
+            snprintf(payload, sizeof(payload), "{\"gpio%d\": %d}",
+                     _SUSPEND_GPIO, _suspend_level);
+            msg_id = esp_mqtt_client_publish(client, "/gpio4/level", payload, strlen(payload), 1, 0);
+            ESP_LOGI(TAG, "sent publish successful, msg_id=%d, payload: %s", 
+                     msg_id, payload);
+        }
+        vTaskDelay(pdMS_TO_TICKS(3000));
+    }
+}
+
 static void mqtt_app_start(void)
 {
     /* 从Kconfig配置文件获取 broker url */
@@ -163,6 +192,8 @@ static void mqtt_app_start(void)
 
     // 启动MQTT客户端
     esp_mqtt_client_start(client);
+
+    xTaskCreate(task_check_gpio_level, "task A", 2048, (void *)client, 10, NULL);
 }
 
 void app_main(void)
