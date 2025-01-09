@@ -6,3 +6,4 @@ logs
 dependencies.lock
 sdkconfig
 sdkconfig.old
+*.out
