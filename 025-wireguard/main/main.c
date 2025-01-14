@@ -121,6 +121,9 @@ static void test_on_ping_end(esp_ping_handle_t hdl, void *args)
 
 void start_ping()
 {
+    // CONFIG_EXAMPLE_PING_ADDRESS
+    const char *dst_ip = CONFIG_EXAMPLE_PING_ADDRESS;
+    // const char *dst_ip = "www.espressif.com";
     ESP_LOGI(TAG, "Initializing ping...");
     /* convert URL to IP address */
     ip_addr_t target_addr;
@@ -128,12 +131,12 @@ void start_ping()
     struct addrinfo hint;
     memset(&hint, 0, sizeof(hint));
     memset(&target_addr, 0, sizeof(target_addr));
-    ESP_ERROR_CHECK(lwip_getaddrinfo(CONFIG_EXAMPLE_PING_ADDRESS, 
+    ESP_ERROR_CHECK(lwip_getaddrinfo(dst_ip, 
                                      NULL, &hint, &res) == 0 ? ESP_OK : ESP_FAIL);
     struct in_addr addr4 = ((struct sockaddr_in *) (res->ai_addr))->sin_addr;
     inet_addr_to_ip4addr(ip_2_ip4(&target_addr), &addr4);
     lwip_freeaddrinfo(res);
-    ESP_LOGI(TAG, "ICMP echo target: %s", CONFIG_EXAMPLE_PING_ADDRESS);
+    ESP_LOGI(TAG, "ICMP echo target: %s", dst_ip);
     esp_ping_config_t ping_config = ESP_PING_DEFAULT_CONFIG();
     ping_config.target_addr = target_addr;          // target IP address
     ping_config.count = ESP_PING_COUNT_INFINITE;    // ping in infinite mode, esp_ping_stop can stop it

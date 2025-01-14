@@ -28,9 +28,8 @@
 
 <script>
     //服务器地址    
-    //烧录进ESP32时使用 "ws://"+window.location.host+"/ws" 
-    //调试html时直接写 "ws://192.168.31.117/ws"
-    const ws_client = new WebSocket("ws://" + "192.168.5.175" + "/ws");
+    //调试html时，填写实际的IP地址 "ws://<ip>:port/ws" ，port 默认是80
+    const ws_client = new WebSocket("ws://" + "<ip>:<port>" + "/ws");
 
     /*ws_client连接成功事件*/
     ws_client.onopen = function (event) 

@@ -32,7 +32,9 @@ static const httpd_uri_t ws = {
 /*首页HTML GET处理程序 */
 static esp_err_t home_get_handler(httpd_req_t *req)
 {
+    ESP_LOGI("http", "method: %d, uri: %s", req->method, req->uri);
 	/*获取脚本index.html的存放地址和大小，接受http请求时将脚本发出去*/
+    ESP_LOGI("http", "httpd responed index.html");
     extern const unsigned char upload_script_start[] asm("_binary_index_html_start");
     extern const unsigned char upload_script_end[]   asm("_binary_index_html_end");
     const size_t upload_script_size = (upload_script_end - upload_script_start);
@@ -40,11 +42,29 @@ static esp_err_t home_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-/*首页HTML*/
+/* 首页HTML */
 static const httpd_uri_t home = {
     .uri       = "/",
     .method    = HTTP_GET,
     .handler   = home_get_handler,
+    .user_ctx  = NULL
+};
+
+static esp_err_t data_get_handler(httpd_req_t *req)
+{
+    ESP_LOGI("http", "method: %d, uri: %s", req->method, req->uri);
+	/*获取脚本index.html的存放地址和大小，接受http请求时将脚本发出去*/
+    ESP_LOGI("http", "httpd responed data json");
+    const char *RESP_DATA = "{\"hello\": \"world\"}";
+    httpd_resp_send(req, RESP_DATA, strlen(RESP_DATA));
+    return ESP_OK;
+}
+
+/* data */
+static const httpd_uri_t data = {
+    .uri       = "/data",
+    .method    = HTTP_GET,
+    .handler   = data_get_handler,
     .user_ctx  = NULL
 };
 
@@ -66,6 +86,7 @@ static void ws_async_send(void *arg)
 
 static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t *req)
 {
+    ESP_LOGI(TAG, "trigger_async_send()");
     struct async_resp_arg *resp_arg = malloc(sizeof(struct async_resp_arg));
     if (resp_arg == NULL) 
     {
@@ -83,6 +104,7 @@ static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t *req)
 
 static esp_err_t echo_handler(httpd_req_t *req)
 {
+    ESP_LOGI(TAG, "method: %d, uri: %s", req->method, req->uri);
     if (req->method == HTTP_GET) 
     {
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
@@ -128,6 +150,7 @@ static esp_err_t echo_handler(httpd_req_t *req)
         return trigger_async_send(req->handle, req);
     }
 
+    ESP_LOGI(TAG, "httpd_ws_send_frame()");
     ret = httpd_ws_send_frame(req, &ws_pkt);
     if (ret != ESP_OK) 
     {
@@ -156,10 +179,13 @@ static void ws_event_handler(void* arg, esp_event_base_t event_base,
         case HTTP_SERVER_EVENT_HEADERS_SENT: // 在将所有标头发送到客户端之后
             break;
         case HTTP_SERVER_EVENT_ON_DATA: // 从客户端接收数据时发生
+            ESP_LOGI("event", "HTTP_SERVER_EVENT_ON_DATA");
             break;
         case HTTP_SERVER_EVENT_SENT_DATA: // 当ESP HTTP服务器会话结束时发生
+            ESP_LOGI("event", "HTTP_SERVER_EVENT_SENT_DATA");
             break;
         case HTTP_SERVER_EVENT_DISCONNECTED: // 连接已断开
+            ESP_LOGI("event", "HTTP_SERVER_EVENT_DISCONNECTED");
             // esp_http_server_event_data *event = (esp_http_server_event_data *)event_data;
             // ws_client_list_delete(event->fd);
             break;
@@ -186,6 +212,8 @@ static httpd_handle_t start_webserver(void)
                                             NULL,
                                             NULL);
         httpd_register_uri_handler(server, &home);
+        httpd_register_uri_handler(server, &data);
+        
         httpd_register_uri_handler(server, &ws);
         return server;
     }
