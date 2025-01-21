@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+
 # 第一步：确定串口名，分为两种情况 
-#   1）对于给定目标串口名(例如 /dev/ttyUSB0 or /dev/ttyACM0)
+#   1）对于给定目标串口名(例如 /dev/ttyUSB0 or /dev/ttyACM0 or COM14)
 #   2）没有指定目标串口名，需要在计算机上编译所有的的串口，然后指定一个可用串口名
 # 第二步：打开串口
 # 第三步：使用串口Read or Write 数据
@@ -8,6 +10,8 @@
 import serial # 导入串口库 
 import time
 import threading
+import getopt
+import sys
 
 
 def open_serial(port, baudrate=9600):
