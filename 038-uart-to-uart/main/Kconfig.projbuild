@@ -1,0 +1,44 @@
+menu "Example Uart-to-Uart Configuration"
+    menu "UART Module"
+
+        config UART_BAUD_RATE
+            int "UART0 and UART1 communication speed"
+            range 1200 115200
+            default 115200
+            help
+                UART0 and UART1 communication speed for Modbus example.
+                115200 BAUD is default on Dongle-M.
+
+        config UART0_TXD
+            int "UART0 TXD pin number"
+            range 1 39
+            default 1
+            help
+                GPIO number for UART0 TX pin. GPIO1 is default on Dongle-M.
+        
+        config UART0_RXD
+            int "UART0 RXD pin number"
+            range 1 39
+            default 3
+            help
+                GPIO number for UART1 RX pin. GPIO3 is default on Dongle-M.
+
+
+        config UART2_TXD
+            int "UART2 TXD pin number"
+            range 1 39
+            default 17
+            help
+                GPIO number for UART2 TX pin. GPIO17 is default on Dongle-M.
+        
+        config UART2_RXD
+            int "UART2 RXD pin number"
+            range 1 39
+            default 13
+            help
+                GPIO number for UART2 RX pin. GPIO16 is default on Dongle-M.
+                With the last PCB version, the UART2_RXD is GPIO16, but now is GPIO13 
+
+    endmenu
+
+endmenu
