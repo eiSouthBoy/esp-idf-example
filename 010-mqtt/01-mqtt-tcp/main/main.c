@@ -35,7 +35,8 @@
 
 static const char *TAG = "mqtt_example";
 static bool g_mqtt_connected = false;
-#define _SUSPEND_GPIO GPIO_NUM_4
+// #define _SUSPEND_GPIO GPIO_NUM_4
+#define _SUSPEND_GPIO GPIO_NUM_32
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -141,12 +142,14 @@ void task_check_gpio_level(void *pvPram)
         ESP_LOGI(TAG, "gpio%d level: %d", _SUSPEND_GPIO, _suspend_level);
         if (g_mqtt_connected)
         {
+            char topic[64] = {0};
             char payload[64] = {0};
             snprintf(payload, sizeof(payload), "{\"gpio%d\": %d}",
                      _SUSPEND_GPIO, _suspend_level);
-            msg_id = esp_mqtt_client_publish(client, "/gpio4/level", payload, strlen(payload), 1, 0);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d, payload: %s", 
-                     msg_id, payload);
+            snprintf(topic, sizeof(topic), "/gpio/level%d", _SUSPEND_GPIO);
+            msg_id = esp_mqtt_client_publish(client, topic, payload, strlen(payload), 1, 0);
+            ESP_LOGI(TAG, "sent publish successful, msg_id=%d, topic: %s, payload: %s", 
+                     msg_id, topic, payload);
         }
         vTaskDelay(pdMS_TO_TICKS(3000));
     }

@@ -6,7 +6,8 @@
 
 static const char *TAG = "gpio_example";  
 
-#define _SUSPEND_GPIO GPIO_NUM_4
+// #define _SUSPEND_GPIO GPIO_NUM_4
+#define _SUSPEND_GPIO GPIO_NUM_32
 
 void task_check_gpio_level(void *pvPram)
 {
@@ -22,10 +23,10 @@ void task_check_gpio_level(void *pvPram)
 
 void app_main(void)
 {
-    // xTaskCreate(task_check_gpio_level, "task A", 2048, NULL, 10, NULL);
+    xTaskCreate(task_check_gpio_level, "task A", 2048, NULL, 10, NULL);
     for (int i = 0; i < 10; i++)
     {
-        ESP_LOGI(TAG, "hello world");
+        // ESP_LOGI(TAG, "hello world");
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
