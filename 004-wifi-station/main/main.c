@@ -116,6 +116,9 @@ static void event_handler(void *arg,
       {
          xEventGroupSetBits(g_wifi_event_group, WIFI_FAIL_BIT);
       }
+
+      wifi_event_sta_disconnected_t *sta_disconnect_evt = (wifi_event_sta_disconnected_t *)event_data;
+      ESP_LOGI(TAG, "---> wifi disconnect reason: %d <---", sta_disconnect_evt->reason);
    }
    else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED)
    {

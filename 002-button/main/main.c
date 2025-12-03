@@ -249,4 +249,15 @@ void app_main(void)
     // app_driver_led_init();
     example_ledc_init();
     app_driver_button_init(BUTTON_GPIO_0);
+
+    for (int i = 0; i < 5; i++)
+    {
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 8192));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+        vTaskDelay(pdMS_TO_TICKS(200));
+
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL));
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
 }
